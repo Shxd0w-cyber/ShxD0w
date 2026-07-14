@@ -1,1 +1,269 @@
-script 
+-- Wait until the game loads completely
+repeat task.wait() until game:IsLoaded()
+
+-- Prevent multiple menu instances from duplicating
+local existingUI = game:GetService("CoreGui"):FindFirstChild("SLS_Mobile_Hub") or game:GetService("Players").LocalPlayer:WaitForChild("PlayerGui"):FindFirstChild("SLS_Mobile_Hub")
+if existingUI then existingUI:Destroy() end
+
+-- State Flags
+local InfiniteStaminaEnabled = false
+local AutoSaveGoleiro = false
+local HitboxExpansionEnabled = false
+local AutoTackleEnabled = false
+local AutoDribbleEnabled = false
+local HitboxSize = 15
+
+-- Roblox Services
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local RunService = game:GetService("RunService")
+
+-- Create Custom Main Interface Frame
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "SLS_Mobile_Hub"
+ScreenGui.ResetOnSpawn = false
+
+-- Target CoreGui or Fallback safely for mobile execution context
+local targetParent = pcall(function() ScreenGui.Parent = game:GetService("CoreGui") end)
+if not targetParent then ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui") end
+
+local MainFrame = Instance.new("Frame")
+MainFrame.Name = "MainFrame"
+MainFrame.Size = UUDim2.new(0, 320, 0, 380)
+MainFrame.Position = UDim2.new(0.5, -160, 0.5, -190)
+MainFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 30)
+MainFrame.BorderSizePixel = 0
+MainFrame.Active = true
+MainFrame.Draggable = true
+MainFrame.Parent = ScreenGui
+
+local UICorner = Instance.new("UICorner")
+UICorner.CornerRadius = UDim.new(0, 8)
+UICorner.Parent = MainFrame
+
+-- Title Header Banner
+local Title = Instance.new("TextLabel")
+Title.Size = UDim2.new(1, 0, 0, 40)
+Title.BackgroundColor3 = Color3.fromRGB(35, 35, 45)
+Title.Text = "  SLS Mobile Hub | By Akai"
+Title.TextColor3 = Color3.fromRGB(255, 255, 255)
+Title.TextXAlignment = Enum.TextXAlignment.Left
+Title.Font = Enum.Font.SourceSansBold
+Title.TextSize = 18
+Title.Parent = MainFrame
+
+local TitleCorner = Instance.new("UICorner")
+TitleCorner.CornerRadius = UDim.new(0, 8)
+TitleCorner.Parent = Title
+
+-- Minimize/Close UI Button
+local CloseButton = Instance.new("TextButton")
+CloseButton.Size = UDim2.new(0, 35, 0, 30)
+CloseButton.Position = UDim2.new(1, -40, 0, 5)
+CloseButton.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
+CloseButton.Text = "X"
+CloseButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+CloseButton.Font = Enum.Font.SourceSansBold
+CloseButton.TextSize = 16
+CloseButton.Parent = MainFrame
+
+local CloseCorner = Instance.new("UICorner")
+CloseCorner.CornerRadius = UDim.new(0, 4)
+CloseCorner.Parent = CloseButton
+
+CloseButton.MouseButton1Click:Connect(function()
+    ScreenGui:Destroy()
+end)
+
+-- Layout Container for Features
+local ScrollingFrame = Instance.new("ScrollingFrame")
+ScrollingFrame.Size = UDim2.new(1, -20, 1, -60)
+ScrollingFrame.Position = UDim2.new(0, 10, 0, 50)
+ScrollingFrame.BackgroundTransparency = 1
+ScrollingFrame.CanvasSize = UDim2.new(0, 0, 0, 450)
+ScrollingFrame.ScrollBarThickness = 4
+ScrollingFrame.Parent = MainFrame
+
+local UIListLayout = Instance.new("UIListLayout")
+UIListLayout.Padding = UDim.new(0, 8)
+UIListLayout.SortOrder = Enum.SortOrder.LayoutOrder
+UIListLayout.Parent = ScrollingFrame
+
+-- Helper Function to Render Toggles Beautifully
+local function CreateFeatureToggle(name, callback)
+    local Button = Instance.new("TextButton")
+    Button.Size = UDim2.new(1, -5, 0, 45)
+    Button.BackgroundColor3 = Color3.fromRGB(45, 45, 55)
+    Button.Text = name .. " : OFF"
+    Button.TextColor3 = Color3.fromRGB(220, 70, 70)
+    Button.Font = Enum.Font.SourceSansSemibold
+    Button.TextSize = 16
+    Button.Parent = ScrollingFrame
+    
+    local BCorner = Instance.new("UICorner")
+    BCorner.CornerRadius = UDim.new(0, 6)
+    BCorner.Parent = Button
+    
+    local active = false
+    Button.MouseButton1Click:Connect(function()
+        active = not active
+        if active then
+            Button.Text = name .. " : ON"
+            Button.TextColor3 = Color3.fromRGB(70, 220, 70)
+            Button.BackgroundColor3 = Color3.fromRGB(55, 65, 55)
+        else
+            Button.Text = name .. " : OFF"
+            Button.TextColor3 = Color3.fromRGB(220, 70, 70)
+            Button.BackgroundColor3 = Color3.fromRGB(45, 45, 55)
+        end
+        callback(active)
+    end)
+end
+
+-- ==========================================
+-- POPULATE TOGGLE BUTTONS
+-- ==========================================
+
+CreateFeatureToggle("Infinite Stamina", function(state)
+    InfiniteStaminaEnabled = state
+end)
+
+CreateFeatureToggle("Goalkeeper Auto Save", function(state)
+    AutoSaveGoleiro = state
+end)
+
+CreateFeatureToggle("Expand Ball Hitbox", function(state)
+    HitboxExpansionEnabled = state
+end)
+
+CreateFeatureToggle("Auto Tackle", function(state)
+    AutoTackleEnabled = state
+end)
+
+CreateFeatureToggle("Auto Dribble", function(state)
+    AutoDribbleEnabled = state
+end)
+
+-- Custom Hitbox Slider Configuration
+local SliderLabel = Instance.new("TextLabel")
+SliderLabel.Size = UDim2.new(1, -5, 0, 25)
+SliderLabel.BackgroundTransparency = 1
+SliderLabel.Text = "Hitbox Size: " .. tostring(HitboxSize) .. " studs"
+SliderLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
+SliderLabel.Font = Enum.Font.SourceSans
+SliderLabel.TextSize = 14
+SliderLabel.Parent = ScrollingFrame
+
+local SliderBtn = Instance.new("TextButton")
+SliderBtn.Size = UDim2.new(1, -5, 0, 20)
+SliderBtn.BackgroundColor3 = Color3.fromRGB(35, 35, 40)
+SliderBtn.Text = "[ Tap to change size ]"
+SliderBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+SliderBtn.Font = Enum.Font.SourceSans
+SliderBtn.TextSize = 14
+SliderBtn.Parent = ScrollingFrame
+
+SliderBtn.MouseButton1Click:Connect(function()
+    if HitboxSize == 15 then HitboxSize = 25
+    elseif HitboxSize == 25 then HitboxSize = 40
+    elseif HitboxSize == 40 then HitboxSize = 5
+    else HitboxSize = 15 end
+    SliderLabel.Text = "Hitbox Size: " .. tostring(HitboxSize) .. " studs"
+end)
+
+-- ==========================================
+-- ROBLOX COMPETITIVE SOCCER LOGIC ENGINE
+-- ==========================================
+
+task.spawn(function()
+    local Knit = require(ReplicatedStorage:WaitForChild("Packages"):WaitForChild("Knit"))
+    local StaminaController = Knit.GetController("StaminaController")
+    local originalConsume = StaminaController.Consume
+    StaminaController.Consume = function(self, amount)
+        if InfiniteStaminaEnabled then
+            local States = require(ReplicatedStorage.Shared.States)
+            local Defaults = require(ReplicatedStorage.Shared.Defaults.Movement)
+            States.Stamina.Amount:set(Defaults.Stamina.Maximum)
+            return true
+        end
+        return originalConsume(self, amount)
+    end
+end)
+
+RunService.Heartbeat:Connect(function()
+    local Character = LocalPlayer.Character
+    local RootPart = Character and Character:FindFirstChild("HumanoidRootPart")
+    if not RootPart then return end
+
+    local Ball = workspace:FindFirstChild("Football") or workspace:FindFirstChild("Ball")
+    if not Ball or not Ball:IsA("BasePart") then return end
+
+    local Distance = (Ball.Position - RootPart.Position).Magnitude
+
+    if HitboxExpansionEnabled then
+        Ball.Size = Vector3.new(HitboxSize, HitboxSize, HitboxSize)
+        Ball.CanCollide = false
+    else
+        Ball.Size = Vector3.new(2, 2, 2)
+    end
+
+    if AutoSaveGoleiro and Distance < 30 then
+        local Knit = require(ReplicatedStorage.Packages.Knit)
+        local ActionController = Knit.GetController("ActionController")
+        if ActionController and not ActionController:IsOnCooldown("Save") then
+            ActionController:RequestAction("Save")
+            if Distance < 15 then
+                Ball.CFrame = RootPart.CFrame * CFrame.new(0, 0, -2)
+            end
+        end
+    end
+end)
+
+task.spawn(function()
+    while task.wait(0.1) do
+        if AutoTackleEnabled then
+            local Character = LocalPlayer.Character
+            local RootPart = Character and Character:FindFirstChild("HumanoidRootPart")
+            if RootPart then
+                for _, player in pairs(Players:GetPlayers()) do
+                    if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+                        if player:GetAttribute("HasBall") and (player.Character.HumanoidRootPart.Position - RootPart.Position).Magnitude < 12 then
+                            local Knit = require(ReplicatedStorage.Packages.Knit)
+                            local ActionController = Knit.GetController("ActionController")
+                            if ActionController and not ActionController:IsOnCooldown("Tackle") then
+                                ActionController:RequestAction("Tackle")
+                            end
+                        end
+                    end
+                end
+            end
+        end
+    end
+end)
+
+task.spawn(function()
+    while task.wait(0.1) do
+        if AutoDribbleEnabled then
+            local Character = LocalPlayer.Character
+            local RootPart = Character and Character:FindFirstChild("HumanoidRootPart")
+            if RootPart and LocalPlayer:GetAttribute("HasBall") then
+                for _, player in pairs(Players:GetPlayers()) do
+                    if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+                        if (player.Character.HumanoidRootPart.Position - RootPart.Position).Magnitude < 10 then
+                            local Knit = require(ReplicatedStorage.Packages.Knit)
+                            local ActionController = Knit.GetController("ActionController")
+                            if ActionController and not ActionController:IsOnCooldown("Dribble") then
+                                ActionController:RequestAction("Dribble")
+                                task.wait(0.5)
+                            end
+                        end
+                    end
+                end
+            end
+        end
+    end
+end)
+
+print("SLS Independent Core Engine Injected.")
+
