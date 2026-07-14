@@ -1,9 +1,14 @@
--- Wait until the game loads completely
-repeat task.wait() until game:IsLoaded()
+-- Wait for the session to be fully ready
+if not game:IsLoaded() then game.Loaded:Wait() end
 
--- Prevent multiple menu instances from duplicating
-local existingUI = game:GetService("CoreGui"):FindFirstChild("SLS_Mobile_Hub") or game:GetService("Players").LocalPlayer:WaitForChild("PlayerGui"):FindFirstChild("SLS_Mobile_Hub")
+-- Clear previous UI objects to avoid overlapping
+local existingUI = game:GetService("Players").LocalPlayer:WaitForChild("PlayerGui"):FindFirstChild("SLS_Mobile_Hub")
 if existingUI then existingUI:Destroy() end
+
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local RunService = game:GetService("RunService")
 
 -- State Flags
 local InfiniteStaminaEnabled = false
@@ -13,179 +18,119 @@ local AutoTackleEnabled = false
 local AutoDribbleEnabled = false
 local HitboxSize = 15
 
--- Roblox Services
-local Players = game:GetService("Players")
-local LocalPlayer = Players.LocalPlayer
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local RunService = game:GetService("RunService")
+-- Safe Framework Hooks
+local function getControllerSafely(name)
+    local success, Knit = pcall(function() return require(ReplicatedStorage:WaitForChild("Packages"):WaitForChild("Knit")) end)
+    if success and Knit then
+        local res, controller = pcall(function() return Knit.GetController(name) end)
+        if res then return controller end
+    end
+    return nil
+end
 
--- Create Custom Main Interface Frame
-local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "SLS_Mobile_Hub"
-ScreenGui.ResetOnSpawn = false
+-- ==========================================
+-- CUSTOM RENDER ENGINE (Bypasses CoreGui Errors)
+-- ==========================================
+local UIContainer = Instance.new("ScreenGui")
+UIContainer.Name = "SLS_Mobile_Hub"
+UIContainer.ResetOnSpawn = false
+UIContainer.Parent = LocalPlayer:WaitForChild("PlayerGui")
 
--- Target CoreGui or Fallback safely for mobile execution context
-local targetParent = pcall(function() ScreenGui.Parent = game:GetService("CoreGui") end)
-if not targetParent then ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui") end
+local Frame = Instance.new("Frame")
+Frame.Size = UDim2.new(0, 260, 0, 320)
+Frame.Position = UDim2.new(0.5, -130, 0.4, -160)
+Frame.BackgroundColor3 = Color3.fromRGB(30, 30, 35)
+Frame.Active = true
+Frame.Draggable = true
+Frame.Parent = UIContainer
 
-local MainFrame = Instance.new("Frame")
-MainFrame.Name = "MainFrame"
-MainFrame.Size = UUDim2.new(0, 320, 0, 380)
-MainFrame.Position = UDim2.new(0.5, -160, 0.5, -190)
-MainFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 30)
-MainFrame.BorderSizePixel = 0
-MainFrame.Active = true
-MainFrame.Draggable = true
-MainFrame.Parent = ScreenGui
+local Corner = Instance.new("UICorner")
+Corner.CornerRadius = UDim.new(0, 8)
+Corner.Parent = Frame
 
-local UICorner = Instance.new("UICorner")
-UICorner.CornerRadius = UDim.new(0, 8)
-UICorner.Parent = MainFrame
-
--- Title Header Banner
 local Title = Instance.new("TextLabel")
-Title.Size = UDim2.new(1, 0, 0, 40)
-Title.BackgroundColor3 = Color3.fromRGB(35, 35, 45)
-Title.Text = "  SLS Mobile Hub | By Akai"
+Title.Size = UDim2.new(1, 0, 0, 35)
+Title.BackgroundColor3 = Color3.fromRGB(40, 40, 50)
+Title.Text = "SLS Mobile Hub | Akai"
 Title.TextColor3 = Color3.fromRGB(255, 255, 255)
-Title.TextXAlignment = Enum.TextXAlignment.Left
 Title.Font = Enum.Font.SourceSansBold
-Title.TextSize = 18
-Title.Parent = MainFrame
+Title.TextSize = 16
+Title.Parent = Frame
 
 local TitleCorner = Instance.new("UICorner")
 TitleCorner.CornerRadius = UDim.new(0, 8)
 TitleCorner.Parent = Title
 
--- Minimize/Close UI Button
-local CloseButton = Instance.new("TextButton")
-CloseButton.Size = UDim2.new(0, 35, 0, 30)
-CloseButton.Position = UDim2.new(1, -40, 0, 5)
-CloseButton.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
-CloseButton.Text = "X"
-CloseButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-CloseButton.Font = Enum.Font.SourceSansBold
-CloseButton.TextSize = 16
-CloseButton.Parent = MainFrame
+local List = Instance.new("ScrollingFrame")
+List.Size = UDim2.new(1, -10, 1, -45)
+List.Position = UDim2.new(0, 5, 0, 40)
+List.BackgroundTransparency = 1
+List.CanvasSize = UDim2.new(0, 0, 0, 360)
+List.ScrollBarThickness = 2
+List.Parent = Frame
 
-local CloseCorner = Instance.new("UICorner")
-CloseCorner.CornerRadius = UDim.new(0, 4)
-CloseCorner.Parent = CloseButton
+local Layout = Instance.new("UIListLayout")
+Layout.Padding = UDim.new(0, 6)
+Layout.Parent = List
 
-CloseButton.MouseButton1Click:Connect(function()
-    ScreenGui:Destroy()
-end)
-
--- Layout Container for Features
-local ScrollingFrame = Instance.new("ScrollingFrame")
-ScrollingFrame.Size = UDim2.new(1, -20, 1, -60)
-ScrollingFrame.Position = UDim2.new(0, 10, 0, 50)
-ScrollingFrame.BackgroundTransparency = 1
-ScrollingFrame.CanvasSize = UDim2.new(0, 0, 0, 450)
-ScrollingFrame.ScrollBarThickness = 4
-ScrollingFrame.Parent = MainFrame
-
-local UIListLayout = Instance.new("UIListLayout")
-UIListLayout.Padding = UDim.new(0, 8)
-UIListLayout.SortOrder = Enum.SortOrder.LayoutOrder
-UIListLayout.Parent = ScrollingFrame
-
--- Helper Function to Render Toggles Beautifully
-local function CreateFeatureToggle(name, callback)
-    local Button = Instance.new("TextButton")
-    Button.Size = UDim2.new(1, -5, 0, 45)
-    Button.BackgroundColor3 = Color3.fromRGB(45, 45, 55)
-    Button.Text = name .. " : OFF"
-    Button.TextColor3 = Color3.fromRGB(220, 70, 70)
-    Button.Font = Enum.Font.SourceSansSemibold
-    Button.TextSize = 16
-    Button.Parent = ScrollingFrame
+-- Safe Custom Toggle Renderer
+local function AddToggle(text, callback)
+    local Btn = Instance.new("TextButton")
+    Btn.Size = UDim2.new(1, 0, 0, 40)
+    Btn.BackgroundColor3 = Color3.fromRGB(45, 45, 50)
+    Btn.Text = text .. " [OFF]"
+    Btn.TextColor3 = Color3.fromRGB(240, 80, 80)
+    Btn.Font = Enum.Font.SourceSansSemibold
+    Btn.TextSize = 15
+    Btn.Parent = List
     
-    local BCorner = Instance.new("UICorner")
-    BCorner.CornerRadius = UDim.new(0, 6)
-    BCorner.Parent = Button
+    local C = Instance.new("UICorner")
+    C.CornerRadius = UDim.new(0, 6)
+    C.Parent = Btn
     
-    local active = false
-    Button.MouseButton1Click:Connect(function()
-        active = not active
-        if active then
-            Button.Text = name .. " : ON"
-            Button.TextColor3 = Color3.fromRGB(70, 220, 70)
-            Button.BackgroundColor3 = Color3.fromRGB(55, 65, 55)
+    local enabled = false
+    Btn.MouseButton1Click:Connect(function()
+        enabled = not enabled
+        if enabled then
+            Btn.Text = text .. " [ON]"
+            Btn.TextColor3 = Color3.fromRGB(80, 240, 80)
+            Btn.BackgroundColor3 = Color3.fromRGB(50, 60, 50)
         else
-            Button.Text = name .. " : OFF"
-            Button.TextColor3 = Color3.fromRGB(220, 70, 70)
-            Button.BackgroundColor3 = Color3.fromRGB(45, 45, 55)
+            Btn.Text = text .. " [OFF]"
+            Btn.TextColor3 = Color3.fromRGB(240, 80, 80)
+            Btn.BackgroundColor3 = Color3.fromRGB(45, 45, 50)
         end
-        callback(active)
+        callback(enabled)
     end)
 end
 
 -- ==========================================
--- POPULATE TOGGLE BUTTONS
+-- ATTACH TOGGLES TO USER INTERFACE
 -- ==========================================
-
-CreateFeatureToggle("Infinite Stamina", function(state)
-    InfiniteStaminaEnabled = state
-end)
-
-CreateFeatureToggle("Goalkeeper Auto Save", function(state)
-    AutoSaveGoleiro = state
-end)
-
-CreateFeatureToggle("Expand Ball Hitbox", function(state)
-    HitboxExpansionEnabled = state
-end)
-
-CreateFeatureToggle("Auto Tackle", function(state)
-    AutoTackleEnabled = state
-end)
-
-CreateFeatureToggle("Auto Dribble", function(state)
-    AutoDribbleEnabled = state
-end)
-
--- Custom Hitbox Slider Configuration
-local SliderLabel = Instance.new("TextLabel")
-SliderLabel.Size = UDim2.new(1, -5, 0, 25)
-SliderLabel.BackgroundTransparency = 1
-SliderLabel.Text = "Hitbox Size: " .. tostring(HitboxSize) .. " studs"
-SliderLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
-SliderLabel.Font = Enum.Font.SourceSans
-SliderLabel.TextSize = 14
-SliderLabel.Parent = ScrollingFrame
-
-local SliderBtn = Instance.new("TextButton")
-SliderBtn.Size = UDim2.new(1, -5, 0, 20)
-SliderBtn.BackgroundColor3 = Color3.fromRGB(35, 35, 40)
-SliderBtn.Text = "[ Tap to change size ]"
-SliderBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-SliderBtn.Font = Enum.Font.SourceSans
-SliderBtn.TextSize = 14
-SliderBtn.Parent = ScrollingFrame
-
-SliderBtn.MouseButton1Click:Connect(function()
-    if HitboxSize == 15 then HitboxSize = 25
-    elseif HitboxSize == 25 then HitboxSize = 40
-    elseif HitboxSize == 40 then HitboxSize = 5
-    else HitboxSize = 15 end
-    SliderLabel.Text = "Hitbox Size: " .. tostring(HitboxSize) .. " studs"
-end)
+AddToggle("Infinite Stamina", function(v) InfiniteStaminaEnabled = v end)
+AddToggle("Goalkeeper Auto Save", function(v) AutoSaveGoleiro = v end)
+AddToggle("Expand Ball Hitbox", function(v) HitboxExpansionEnabled = v end)
+AddToggle("Auto Tackle", function(v) AutoTackleEnabled = v end)
+AddToggle("Auto Dribble", function(v) AutoDribbleEnabled = v end)
 
 -- ==========================================
--- ROBLOX COMPETITIVE SOCCER LOGIC ENGINE
+-- RUN GAME EXPLOIT MECHANICS
 -- ==========================================
-
 task.spawn(function()
-    local Knit = require(ReplicatedStorage:WaitForChild("Packages"):WaitForChild("Knit"))
-    local StaminaController = Knit.GetController("StaminaController")
+    local StaminaController = nil
+    while not StaminaController do
+        StaminaController = getControllerSafely("StaminaController")
+        task.wait(0.5)
+    end
     local originalConsume = StaminaController.Consume
     StaminaController.Consume = function(self, amount)
         if InfiniteStaminaEnabled then
-            local States = require(ReplicatedStorage.Shared.States)
-            local Defaults = require(ReplicatedStorage.Shared.Defaults.Movement)
-            States.Stamina.Amount:set(Defaults.Stamina.Maximum)
-            return true
+            local stateSuccess, States = pcall(require, ReplicatedStorage:WaitForChild("Shared"):WaitForChild("States"))
+            local defaultSuccess, Defaults = pcall(require, ReplicatedStorage.Shared:WaitForChild("Defaults"):WaitForChild("Movement"))
+            if stateSuccess and defaultSuccess then
+                States.Stamina.Amount:set(Defaults.Stamina.Maximum)
+                return true
+            end
         end
         return originalConsume(self, amount)
     end
@@ -209,13 +154,10 @@ RunService.Heartbeat:Connect(function()
     end
 
     if AutoSaveGoleiro and Distance < 30 then
-        local Knit = require(ReplicatedStorage.Packages.Knit)
-        local ActionController = Knit.GetController("ActionController")
+        local ActionController = getControllerSafely("ActionController")
         if ActionController and not ActionController:IsOnCooldown("Save") then
             ActionController:RequestAction("Save")
-            if Distance < 15 then
-                Ball.CFrame = RootPart.CFrame * CFrame.new(0, 0, -2)
-            end
+            if Distance < 15 then Ball.CFrame = RootPart.CFrame * CFrame.new(0, 0, -2) end
         end
     end
 end)
@@ -229,11 +171,8 @@ task.spawn(function()
                 for _, player in pairs(Players:GetPlayers()) do
                     if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
                         if player:GetAttribute("HasBall") and (player.Character.HumanoidRootPart.Position - RootPart.Position).Magnitude < 12 then
-                            local Knit = require(ReplicatedStorage.Packages.Knit)
-                            local ActionController = Knit.GetController("ActionController")
-                            if ActionController and not ActionController:IsOnCooldown("Tackle") then
-                                ActionController:RequestAction("Tackle")
-                            end
+                            local ActionController = getControllerSafely("ActionController")
+                            if ActionController and not ActionController:IsOnCooldown("Tackle") then ActionController:RequestAction("Tackle") end
                         end
                     end
                 end
@@ -251,8 +190,7 @@ task.spawn(function()
                 for _, player in pairs(Players:GetPlayers()) do
                     if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
                         if (player.Character.HumanoidRootPart.Position - RootPart.Position).Magnitude < 10 then
-                            local Knit = require(ReplicatedStorage.Packages.Knit)
-                            local ActionController = Knit.GetController("ActionController")
+                            local ActionController = getControllerSafely("ActionController")
                             if ActionController and not ActionController:IsOnCooldown("Dribble") then
                                 ActionController:RequestAction("Dribble")
                                 task.wait(0.5)
@@ -265,5 +203,4 @@ task.spawn(function()
     end
 end)
 
-print("SLS Independent Core Engine Injected.")
-
+print("SLS Safe Mobile UI Active.")
