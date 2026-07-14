@@ -1,199 +1,201 @@
--- Wait for the session to be fully ready
-if not game:IsLoaded() then game.Loaded:Wait() end
+local H = {} 
 
--- Clear previous UI objects to avoid overlapping
-local existingUI = game:GetService("Players").LocalPlayer:WaitForChild("PlayerGui"):FindFirstChild("SLS_Mobile_Hub")
-if existingUI then existingUI:Destroy() end
-
-local Players = game:GetService("Players")
-local LocalPlayer = Players.LocalPlayer
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local RunService = game:GetService("RunService")
-
--- State Flags
-local InfiniteStaminaEnabled = false
-local AutoSaveGoleiro = false
-local HitboxExpansionEnabled = false
-local AutoTackleEnabled = false
-local AutoDribbleEnabled = false
-local HitboxSize = 15
-
--- Safe Framework Hooks
-local function getControllerSafely(name)
-    local success, Knit = pcall(function() return require(ReplicatedStorage:WaitForChild("Packages"):WaitForChild("Knit")) end)
-    if success and Knit then
-        local res, controller = pcall(function() return Knit.GetController(name) end)
-        if res then return controller end
+-- Reverses elements inside the 'H' array using defined index boundaries
+for _, X in ipairs({ {1, 47}, {1, 16}, {17, 47} }) do
+    while X[1] < X[2] do
+        H[X[1]], H[X[2]], X[1], X[2] = H[X[2]], H[X[1]], X[1] + 1, X[2] - 1
     end
-    return nil
 end
 
--- ==========================================
--- CUSTOM RENDER ENGINE (Bypasses CoreGui Errors)
--- ==========================================
-local UIContainer = Instance.new("ScreenGui")
-UIContainer.Name = "SLS_Mobile_Hub"
-UIContainer.ResetOnSpawn = false
-UIContainer.Parent = LocalPlayer:WaitForChild("PlayerGui")
-
-local Frame = Instance.new("Frame")
-Frame.Size = UDim2.new(0, 260, 0, 320)
-Frame.Position = UDim2.new(0.5, -130, 0.4, -160)
-Frame.BackgroundColor3 = Color3.fromRGB(30, 30, 35)
-Frame.Active = true
-Frame.Draggable = true
-Frame.Parent = UIContainer
-
-local Corner = Instance.new("UICorner")
-Corner.CornerRadius = UDim.new(0, 8)
-Corner.Parent = Frame
-
-local Title = Instance.new("TextLabel")
-Title.Size = UDim2.new(1, 0, 0, 35)
-Title.BackgroundColor3 = Color3.fromRGB(40, 40, 50)
-Title.Text = "SLS Mobile Hub | Akai"
-Title.TextColor3 = Color3.fromRGB(255, 255, 255)
-Title.Font = Enum.Font.SourceSansBold
-Title.TextSize = 16
-Title.Parent = Frame
-
-local TitleCorner = Instance.new("UICorner")
-TitleCorner.CornerRadius = UDim.new(0, 8)
-TitleCorner.Parent = Title
-
-local List = Instance.new("ScrollingFrame")
-List.Size = UDim2.new(1, -10, 1, -45)
-List.Position = UDim2.new(0, 5, 0, 40)
-List.BackgroundTransparency = 1
-List.CanvasSize = UDim2.new(0, 0, 0, 360)
-List.ScrollBarThickness = 2
-List.Parent = Frame
-
-local Layout = Instance.new("UIListLayout")
-Layout.Padding = UDim.new(0, 6)
-Layout.Parent = List
-
--- Safe Custom Toggle Renderer
-local function AddToggle(text, callback)
-    local Btn = Instance.new("TextButton")
-    Btn.Size = UDim2.new(1, 0, 0, 40)
-    Btn.BackgroundColor3 = Color3.fromRGB(45, 45, 50)
-    Btn.Text = text .. " [OFF]"
-    Btn.TextColor3 = Color3.fromRGB(240, 80, 80)
-    Btn.Font = Enum.Font.SourceSansSemibold
-    Btn.TextSize = 15
-    Btn.Parent = List
+do
+    local stringTable = H
+    local floor = math.floor
+    local toChar = string.char
+    local checkType = type
     
-    local C = Instance.new("UICorner")
-    C.CornerRadius = UDim.new(0, 6)
-    C.Parent = Btn
+    -- Mapping table used for custom Base64 decoding
+    local base64Map = {
+        l = 10, T = 52, n = 61, t = 54, U = 51, i = 13, I = 26, o = 29,
+        ["0"] = 19, ["5"] = 43, ["9"] = 60, P = 63, u = 15, V = 14, m = 49,
+        D = 59, E = 37, ["3"] = 17, M = 25, c = 50, ["2"] = 16, a = 8,
+        v = 27, p = 31, W = 33, C = 11, R = 3, N = 32, Q = 9, j = 45,
+        L = 20, G = 38, s = 42, ["4"] = 22, e = 56, ["1"] = 21, b = 39,
+        ["/"] = 58, Z = 36, g = 18, J = 30, d = 0, X = 48, z = 53,
+        O = 57, B = 40, h = 4, f = 5, q = 7, H = 12, w = 46, x = 2,
+        k = 62, ["6"] = 47, A = 55, F = 35, ["+"] = 6, ["7"] = 23,
+        K = 34, S = 44, ["8"] = 28, Y = 1, r = 24, y = 41
+    }
     
-    local enabled = false
-    Btn.MouseButton1Click:Connect(function()
-        enabled = not enabled
-        if enabled then
-            Btn.Text = text .. " [ON]"
-            Btn.TextColor3 = Color3.fromRGB(80, 240, 80)
-            Btn.BackgroundColor3 = Color3.fromRGB(50, 60, 50)
-        else
-            Btn.Text = text .. " [OFF]"
-            Btn.TextColor3 = Color3.fromRGB(240, 80, 80)
-            Btn.BackgroundColor3 = Color3.fromRGB(45, 45, 50)
-        end
-        callback(enabled)
-    end)
-end
-
--- ==========================================
--- ATTACH TOGGLES TO USER INTERFACE
--- ==========================================
-AddToggle("Infinite Stamina", function(v) InfiniteStaminaEnabled = v end)
-AddToggle("Goalkeeper Auto Save", function(v) AutoSaveGoleiro = v end)
-AddToggle("Expand Ball Hitbox", function(v) HitboxExpansionEnabled = v end)
-AddToggle("Auto Tackle", function(v) AutoTackleEnabled = v end)
-AddToggle("Auto Dribble", function(v) AutoDribbleEnabled = v end)
-
--- ==========================================
--- RUN GAME EXPLOIT MECHANICS
--- ==========================================
-task.spawn(function()
-    local StaminaController = nil
-    while not StaminaController do
-        StaminaController = getControllerSafely("StaminaController")
-        task.wait(0.5)
-    end
-    local originalConsume = StaminaController.Consume
-    StaminaController.Consume = function(self, amount)
-        if InfiniteStaminaEnabled then
-            local stateSuccess, States = pcall(require, ReplicatedStorage:WaitForChild("Shared"):WaitForChild("States"))
-            local defaultSuccess, Defaults = pcall(require, ReplicatedStorage.Shared:WaitForChild("Defaults"):WaitForChild("Movement"))
-            if stateSuccess and defaultSuccess then
-                States.Stamina.Amount:set(Defaults.Stamina.Maximum)
-                return true
-            end
-        end
-        return originalConsume(self, amount)
-    end
-end)
-
-RunService.Heartbeat:Connect(function()
-    local Character = LocalPlayer.Character
-    local RootPart = Character and Character:FindFirstChild("HumanoidRootPart")
-    if not RootPart then return end
-
-    local Ball = workspace:FindFirstChild("Football") or workspace:FindFirstChild("Ball")
-    if not Ball or not Ball:IsA("BasePart") then return end
-
-    local Distance = (Ball.Position - RootPart.Position).Magnitude
-
-    if HitboxExpansionEnabled then
-        Ball.Size = Vector3.new(HitboxSize, HitboxSize, HitboxSize)
-        Ball.CanCollide = false
-    else
-        Ball.Size = Vector3.new(2, 2, 2)
-    end
-
-    if AutoSaveGoleiro and Distance < 30 then
-        local ActionController = getControllerSafely("ActionController")
-        if ActionController and not ActionController:IsOnCooldown("Save") then
-            ActionController:RequestAction("Save")
-            if Distance < 15 then Ball.CFrame = RootPart.CFrame * CFrame.new(0, 0, -2) end
-        end
-    end
-end)
-
-task.spawn(function()
-    while task.wait(0.1) do
-        if AutoTackleEnabled then
-            local Character = LocalPlayer.Character
-            local RootPart = Character and Character:FindFirstChild("HumanoidRootPart")
-            if RootPart then
-                for _, player in pairs(Players:GetPlayers()) do
-                    if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
-                        if player:GetAttribute("HasBall") and (player.Character.HumanoidRootPart.Position - RootPart.Position).Magnitude < 12 then
-                            local ActionController = getControllerSafely("ActionController")
-                            if ActionController and not ActionController:IsOnCooldown("Tackle") then ActionController:RequestAction("Tackle") end
-                        end
+    local strLen = string.len
+    local tableConcat = table.concat
+    local strSub = string.sub
+    local tableInsert = table.insert
+    
+    -- Main loop decodes all encrypted strings inside the table
+    for i = 1, #stringTable, 1 do
+        local rawStr = stringTable[i]
+        
+        if checkType(rawStr) == "string" then
+            local length = strLen(rawStr)
+            local decodedChars = {}
+            local index = 1
+            local bitBuffer = 0
+            local bitCount = 0
+            
+            while index <= length do
+                local char = strSub(rawStr, index, index)
+                local mapValue = base64Map[char]
+                
+                if mapValue then
+                    bitBuffer = bitBuffer + mapValue * 64 ^ (3 - bitCount)
+                    bitCount = bitCount + 1
+                    
+                    if bitCount == 4 then
+                        bitCount = 0
+                        local byte1 = floor(bitBuffer / 65536)
+                        local byte2 = floor((bitBuffer % 65536) / 256)
+                        local byte3 = bitBuffer % 256
+                        tableInsert(decodedChars, toChar(byte1, byte2, byte3))
+                        bitBuffer = 0
                     end
+                elseif char == "=" then
+                    tableInsert(decodedChars, toChar(floor(bitBuffer / 65536)))
+                    if index >= length or strSub(rawStr, index + 1, index + 1) ~= "=" then
+                        tableInsert(decodedChars, toChar(floor((bitBuffer % 65536) / 256)))
+                    end
+                    break
                 end
+                index = index + 1
             end
+            stringTable[i] = tableConcat(decodedChars)
         end
     end
-end)
+end
 
-task.spawn(function()
-    while task.wait(0.1) do
-        if AutoDribbleEnabled then
-            local Character = LocalPlayer.Character
-            local RootPart = Character and Character:FindFirstChild("HumanoidRootPart")
-            if RootPart and LocalPlayer:GetAttribute("HasBall") then
-                for _, player in pairs(Players:GetPlayers()) do
-                    if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
-                        if (player.Character.HumanoidRootPart.Position - RootPart.Position).Magnitude < 10 then
-                            local ActionController = getControllerSafely("ActionController")
-                            if ActionController and not ActionController:IsOnCooldown("Dribble") then
-                                ActionController:RequestAction("Dribble")
-                                task.wait(0.5)
+return (function(H, y, q, f, z, E, P, U, w, a, A, T, X, c, n, x, C, p, F, K)
+    -- Initialize VM inner function handlers
+    K = function(H, I)
+        local y = x(I)
+        return function(...)
+            return X(H, {...}, I, y)
+        end
+    end
+
+    F = function(H, I)
+        local y = x(I)
+        return function(q)
+            return X(H, {q}, I, y)
+        end
+    end
+
+    a = 0
+
+    w = function(H, I)
+        local y = x(I)
+        return function(q, f, z, E)
+            return X(H, {q, f, z, E}, I, y)
+        end
+    end
+
+    z = function(X, q, f, z)
+        local u, b, i, v, P, h, m, d, Q, Y, G, l, j, J, B, x, O, R, k, c, p, D, e, Z, t, L, o, V, W, a, K, r, S, g
+        
+        while X do
+            if X < 9678083 then
+                if X < 4121800 then
+                    if X < 2201776 then
+                        if X < 1786050 then
+                            if X < 1412323 then
+                                if X < 1060447 then
+                                    if X < 219605 then
+                                        d = #Q
+                                        J = 0
+                                        e = (d == J)
+                                        X = e and 14544368 or 1454992
+                                    else
+                                        X = C[f[10]]
+                                        a = C[f[11]]
+                                        c[X] = a
+                                        X = C[f[12]]
+                                        a = {X(c)}
+                                        X = H[I(1831)]
+                                        P = {y(a)}
+                                    end
+                                else
+                                    X = 2723160
+                                end
+                            else
+                                if X < 1572802 then
+                                    J = #Q
+                                    d = 1
+                                    e = p(d, J)
+                                    d = v(Q, e)
+                                    J = C[i]
+                                    e = nil
+                                    X = 162871
+                                    Z = 1
+                                    D = d - Z
+                                    r = h(D)
+                                    J[d] = r
+                                    d = nil
+                                else
+                                    b = 13
+                                    a = C[f[3]]
+                                    x = 32
+                                    c = a % x
+                                    S = 2
+                                    p = C[f[4]]
+                                    h = C[f[2]]
+                                    e = C[f[3]]
+                                    Q = e - c
+                                    e = 32
+                                    i = Q / e
+                                    k = b - i
+                                    u = S ^ k
+                                    v = h / u
+                                    u = 1
+                                    K = p(v)
+                                    p = 4294967296
+                                    x = K % p
+                                    K = 2
+                                    p = K ^ c
+                                    a = x / p
+                                    p = C[f[4]]
+                                    S = 256
+                                    h = a % u
+                                    b = 256
+                                    u = 4294967296
+                                    v = h * u
+                                    K = p(v)
+                                    p = C[f[4]]
+                                    X = 16003026
+                                    v = p(a)
+                                    x = K + v
+                                    K = 65536
+                                    p = x % K
+                                    v = x - p
+                                    x = nil
+                                    c = nil
+                                    h = 65536
+                                    K = v / h
+                                    h = 256
+                                    v = p % h
+                                    u = p - v
+                                    h = u / S
+                                    S = 256
+                                    u = K % S
+                                    k = K - u
+                                    K = nil
+                                    a = nil
+                                    p = nil
+                                    S = k / b
+                                    k = {v, h, u, S}
+                                    u = nil
+                                    v = nil
+                                    S = nil
+                                    C[f[1]] = k
+                                    h = nil
+                                end
                             end
                         end
                     end
@@ -203,4 +205,762 @@ task.spawn(function()
     end
 end)
 
-print("SLS Safe Mobile UI Active.")
+else
+    if X < 1981472 then
+        if X < 1829578 then
+            v = C[K]
+            P = v
+            X = 2218587
+        else
+            P = S
+            X = k
+            X = S and 16720596 or 6773434
+        end
+    else
+        if X < 2072575 then
+            h = I(1791)
+            c = q
+            X = true
+            x = I(1821)
+            a = T()
+            C[a] = X
+            P = H[x]
+            x = I(1809)
+            X = P[x]
+            p = T()
+            K = T()
+            u = U(15889768, {K})
+            x = T()
+            C[x] = X
+            X = w(9552139, {})
+            C[p] = X
+            X = false
+            C[K] = X
+            v = H[h]
+            h = v(u)
+            X = h and 1812644 or 2218587
+            P = h
+        else
+            d = d + r
+            Z = not D
+            e = d <= J
+            e = Z and e
+            Z = d >= J
+            Z = D and Z
+            e = Z or e
+            Z = 11321372
+            X = e and Z
+            e = 12602438
+            X = X or e
+        end
+    end
+else
+    if X < 3309665 then
+        if X < 2726218 then
+            if X < 2470635 then
+                if X < 2388558 then
+                    h = I(1795)
+                    v = P
+                    P = H[h]
+                    h = I(1818)
+                    u = I(1822)
+                    i = I(1822)
+                    X = P[h]
+                    h = T()
+                    C[h] = X
+                    P = H[u]
+                    u = I(1826)
+                    X = P[u]
+                    k = X
+                    b = H[i]
+                    S = b
+                    u = X
+                    X = b and 4313383 or 1980430
+                else
+                    x = 1
+                    a = C[f[3]]
+                    c = a ~= x
+                    X = c and 1763876 or 12554486
+                end
+            else
+                X = true
+                X = X and 13115901 or 4825508
+            end
+        else
+            if X < 3022943 then
+                X = {}
+                C[f[2]] = X
+                h = 255
+                k = 1
+                K = 35184372088832
+                P = C[f[3]]
+                u = I(1821)
+                p = P
+                P = a % K
+                C[f[4]] = P
+                v = a % h
+                h = 2
+                K = v + h
+                C[f[5]] = K
+                h = H[u]
+                u = I(1787)
+                v = h[u]
+                h = v(c)
+                X = 14293230
+                v = I(1796)
+                x[a] = v
+                v = 101
+                b = k
+                S = h
+                k = 0
+                u = 1
+                i = b < k
+                k = u - b
+            else
+                D = I(1795)
+                r = T()
+                C[r] = Y
+                Z = 100
+                o = 2
+                P = H[D]
+                j = 255
+                D = I(1818)
+                X = P[D]
+                D = 1
+                R = 1
+                G = 0
+                P = X(D, Z)
+                Z = 869539 - 869539
+                D = T()
+                C[D] = P
+                X = C[h]
+                P = X(Z, j)
+                Z = T()
+                C[Z] = P
+                X = C[h]
+                j = 1
+                g = C[D]
+                t = 10000
+                P = X(j, g)
+                j = T()
+                C[j] = P
+                P = C[h]
+                g = P(R, o)
+                P = 1
+                X = g == P
+                o = I(1825)
+                g = T()
+                L = I(1792)
+                C[g] = X
+                P = I(1829)
+                W = H[L]
+                V = C[h]
+                X = I(1789)
+                B = {V(G, t)}
+                L = W(y(B))
+                W = I(1825)
+                O = L .. W
+                X = e[X]
+                R = o .. O
+                X = X(e, P, R)
+                R = T()
+                O = U(16505853, {h, r, k, x, a, d, g, R, D, j, Z, S})
+                C[R] = X
+                o = I(1791)
+                P = H[o]
+                o = {P(O)}
+                X = {y(o)}
+                o = X
+                X = C[g]
+                X = X and 10059750 or 12528784
+            end
+        end
+    else
+        if X < 3830615 then
+            if X < 3830615 then
+                X = 9509749
+                l = b == i
+                Y = l
+            else
+                S = F(9817026, {})
+                P = I(1794)
+                X = H[P]
+                c = C[f[4]]
+                p = I(1792)
+                u = I(1791)
+                x = H[p]
+                h = H[u]
+                u = {h(S)}
+                v = {y(u)}
+                h = 2
+                K = v[h]
+                p = x(K)
+                x = I(1829)
+                a = c(p, x)
+                c = {a()}
+                P = X(y(c))
+                a = C[f[5]]
+                c = P
+                X = a and 14018729 or 7968453
+                P = a
+            end
+        else
+            if X < 4087978 then
+                X = 15381769
+            else
+                r = A(r)
+                o = nil
+                j = A(j)
+                R = A(R)
+                g = A(g)
+                X = 6055795
+                Z = A(Z)
+                D = A(D)
+            end
+        end
+    end
+end
+
+if X < 13644524 then
+    if X < 12206312 then
+        if X < 11278562 then
+            if X < 10762694 then
+                if X < 10335085 then
+                    if X < 9957149 then
+                        P = 15549202
+                        x = 10340515
+                        a = I(1786)
+                        c = a ^ x
+                        X = P - c
+                        c = X
+                        P = I(1830)
+                        X = P / c
+                        P = {X}
+                        X = H[I(1798)]
+                    else
+                        O = C[a]
+                        X = O and 14877332 or 4132233
+                        P = O
+                    end
+                else
+                    X = 12111775
+                end
+            else
+                if X < 11137875 then
+                    X = {}
+                    x = C[f[9]]
+                    p = x
+                    a = 1
+                    c = X
+                    x = 1
+                    K = x
+                    x = 0
+                    v = K < x
+                    X = 16408325
+                    x = a - K
+                else
+                    c = I(1817)
+                    x = 0
+                    X = H[c]
+                    a = C[f[8]]
+                    c = X(a, x)
+                    X = 11047725
+                end
+            end
+        else
+            if X < 11779295 then
+                if X < 11464147 then
+                    e = d
+                    X = 2181455
+                    Z = e
+                    Q[e] = Z
+                    e = nil
+                else
+                    a = C[f[2]]
+                    x = 57
+                    c = a * x
+                    a = 30215687321333
+                    P = c + a
+                    c = 35184372088832
+                    X = P % c
+                    C[f[2]] = X
+                    a = 1
+                    c = C[f[3]]
+                    P = c ~= a
+                    X = 12554486
+                end
+            else
+                if X < 12135856 then
+                    X = H[I(1808)]
+                    P = {a}
+                else
+                    X = C[f[7]]
+                    X = X and 11269060 or 11047725
+                end
+            end
+        end
+    else
+        if X < 12653805 then
+            if X < 12597745 then
+                if X < 12531767 then
+                    if X < 12470525 then
+                        X = 7413315
+                        L = 1
+                        W = o[L]
+                        O = W
+                    else
+                        W = C[a]
+                        X = W and 12268236 or 7413315
+                        O = W
+                    end
+                else
+                    x = 210
+                    a = C[f[3]]
+                    c = a * x
+                    a = 257
+                    P = c % a
+                    C[f[3]] = P
+                    X = 2398315
+                end
+            else
+                if X < 12647916 then
+                    J = 0
+                    X = 1454992
+                    d = #Q
+                    e = d == J
+                else
+                    X = H[I(1801)]
+                    P = {}
+                end
+            end
+        else
+            if X < 13135235 then
+                if X < 12832251 then
+                    a = I(1810)
+                    x = 1641580
+                    c = a ^ x
+                    P = 16652422
+                    X = P - c
+                    c = X
+                    P = I(1823)
+                    X = P / c
+                    P = {X}
+                    X = H[I(1785)]
+                else
+                    P = I(1828)
+                    c = I(1814)
+                    X = H[P]
+                    P = H[c]
+                    c = I(1814)
+                    H[c] = X
+                    c = I(1828)
+                    H[c] = P
+                    c = C[f[1]]
+                    X = 2723161
+                    a = c()
+                end
+            else
+                if X < 13255828 then
+                    J = I(1828)
+                    X = H[J]
+                    J = I(1814)
+                    H[J] = X
+                    X = 9341096
+                else
+                    r = I(1814)
+                    m = I(1792)
+                    X = H[m]
+                    J = H[r]
+                    m = X(J)
+                    X = I(1828)
+                    H[X] = m
+                    X = 9341096
+                end
+            end
+        end
+    end
+else
+    if X < 15254335 then
+        if X < 14536830 then
+            if X < 14283676 then
+                if X < 14039044 then
+                    if X < 13899992 then
+                        l = C[a]
+                        X = l and 3479999 or 9509749
+                        Y = l
+                    else
+                        x = C[f[6]]
+                        X = 7968453
+                        a = x == c
+                        P = a
+                    end
+                else
+                    m = I(1821)
+                    u = k
+                    l = H[m]
+                    m = I(1805)
+                    Y = l[m]
+                    l = Y(c, u)
+                    Y = C[f[6]]
+                    m = Y()
+                    d = l + m
+                    m = 1
+                    e = d + v
+                    d = 256
+                    Q = e % d
+                    u = nil
+                    v = Q
+                    d = x[a]
+                    l = v + m
+                    Y = p[l]
+                    e = d .. Y
+                    x[a] = e
+                    X = 14293230
+                end
+            else
+                if X < 14333522 then
+                    k = k + b
+                    u = k <= S
+                    Q = not i
+                    u = Q and u
+                    Q = k >= S
+                    Q = i and Q
+                    u = Q or u
+                    Q = 14097734
+                    X = u and Q
+                    u = 6574671
+                    X = X or u
+                else
+                    X = true
+                    X = 15012877
+                end
+            end
+        else
+            if X < 14988043 then
+                if X < 14599524 then
+                    d = T()
+                    v = nil
+                    e = {}
+                    D = I(1806)
+                    u = nil
+                    g = I(1815)
+                    J = w(4730123, {d, S, k, K})
+                    C[d] = e
+                    e = T()
+                    b = nil
+                    Z = {}
+                    C[e] = J
+                    h = nil
+                    o = I(1827)
+                    K = A(K)
+                    L = nil
+                    J = {}
+                    r = T()
+                    C[r] = J
+                    J = H[D]
+                    R = C[r]
+                    j = {[g] = R, [o] = L}
+                    D = J(Z, j)
+                    J = w(4734151, {r, d, i, S, k, e})
+                    k = A(k)
+                    k = I(1803)
+                    Q = nil
+                    p = nil
+                    x = D
+                    S = A(S)
+                    d = A(d)
+                    b = 6651310705689
+                    P = {}
+                    e = A(e)
+                    r = A(r)
+                    i = A(i)
+                    a = J
+                    K = I(1807)
+                    p = H[K]
+                    h = I(1816)
+                    v = H[h]
+                    S = a(k, b)
+                    u = x[S]
+                    k = I(1819)
+                    S = true
+                    x = nil
+                    k = v[k]
+                    h = {k(v, u, S)}
+                    a = nil
+                    K = p(y(h))
+                    p = K()
+                    X = H[I(1824)]
+                else
+                    W = X
+                    B = 1
+                    V = o[B]
+                    B = false
+                    L = V == B
+                    X = L and 15154567 or 15401612
+                    O = L
+                end
+            else
+                if X < 15135862 then
+                    X = F(1079410, {p})
+                    l = {X()}
+                    P = {y(l)}
+                    X = H[I(1790)]
+                else
+                    B = 2
+                    V = o[B]
+                    B = C[R]
+                    L = V == B
+                    O = L
+                    X = 15401612
+                end
+            end
+        end
+    end
+end
+
+else
+    if X < 15998815 then
+        if X < 15638417 then
+            if X < 15404917 then
+                if X < 15392303 then
+                    X = 2181455
+                    K = A(K)
+                    Q = nil
+                    b = nil
+                    d = A(d)
+                    p = A(p)
+                    e = nil
+                    x = A(x)
+                    d = 256
+                    a = A(a)
+                    x = nil
+                    k = A(k)
+                    h = A(h)
+                    S = A(S)
+                    h = I(1795)
+                    u = nil
+                    v = nil
+                    a = nil
+                    k = T()
+                    i = nil
+                    v = I(1795)
+                    K = H[v]
+                    e = 1
+                    v = I(1802)
+                    p = K[v]
+                    K = T()
+                    u = I(1822)
+                    C[K] = p
+                    v = H[h]
+                    h = I(1818)
+                    p = v[h]
+                    b = {}
+                    h = H[u]
+                    u = I(1793)
+                    S = I(1821)
+                    v = h[u]
+                    u = H[S]
+                    S = I(1800)
+                    h = u[S]
+                    u = 0
+                    S = T()
+                    C[S] = u
+                    u = 2
+                    C[k] = u
+                    i = T()
+                    C[i] = b
+                    u = {}
+                    b = 0
+                    Q = {}
+                    J = d
+                    d = 1
+                    r = d
+                    d = 0
+                    D = r < d
+                    d = e - r
+                else
+                    X = W
+                    P = O
+                    X = 4132233
+                end
+            else
+                a = C[f[2]]
+                x = C[f[3]]
+                c = (a == x)
+                P = c
+                X = 15987392
+            end
+        else
+            if X < 15908346 then
+                X = true
+                P = {}
+                C[f[1]] = X
+                X = H[I(1797)]
+            else
+                X = P and 3939501 or 12179989
+            end
+        end
+    else
+        if X < 16439252 then
+            if X < 16291801 then
+                x = I(1822)
+                a = H[x]
+                x = I(1793)
+                c = a[x]
+                X = H[I(1813)]
+                x = C[f[1]]
+                a = {c(x)}
+                P = {y(a)}
+            else
+                x = x + K
+                h = not v
+                a = x <= p
+                a = h and a
+                h = x >= p
+                h = v and h
+                a = h or a
+                h = 9248830
+                X = a and h
+                a = 547639
+                X = X or a
+            end
+        else
+            if X < 16556253 then
+                p = 1
+                a = C[f[1]]
+                K = 2
+                x = a(p, K)
+                a = 1
+                c = (x == a)
+                X = c and 15987392 or 15577218
+                P = c
+            else
+                S = T()
+                k = 3
+                C[S] = P
+                Q = I(1791)
+                b = 65
+                X = C[h]
+                P = X(k, b)
+                k = T()
+                X = 0
+                C[k] = P
+                b = X
+                X = 0
+                i = X
+                e = n(12829918, {})
+                P = H[Q]
+                Q = {P(e)}
+                X = {y(Q)}
+                m = I(1792)
+                Q = X
+                P = 2
+                X = Q[P]
+                e = X
+                P = I(1794)
+                X = H[P]
+                d = C[x]
+                l = H[m]
+                m = l(e)
+                l = I(1829)
+                Y = d(m, l)
+                d = {Y()}
+                P = X(y(d))
+                d = T()
+                C[d] = P
+                Y = C[k]
+                X = 6055795
+                l = Y
+                Y = 1
+                P = 1
+                m = Y
+                Y = 0
+                J = m < Y
+                Y = P - m
+            end
+        end
+    end
+end
+
+                X = #z
+                return y(P)
+            end,
+            
+            {},
+            
+            function(H)
+                local I, X = 1, H[1]
+                while X do
+                    c[X], I = c[X] - 1, 1 + I
+                    if c[X] == 0 then
+                        c[X], C[X] = nil, nil
+                    end
+                    X = H[I]
+                end
+            end,
+            
+            function(H, I)
+                local y = x(I)
+                return function(q, f, z)
+                    return X(H, {q, f, z}, I, y)
+                end
+            end,
+            
+            {},
+            
+            function()
+                a = a + 1
+                c[a] = 1
+                return a
+            end,
+            
+            function(H, I)
+                local y = x(I)
+                return function(q, f, z, E, P)
+                    return X(H, {q, f, z, E, P}, I, y)
+                end
+            end,
+            
+            function(H)
+                c[H] = c[H] - 1
+                if c[H] == 0 then
+                    c[H], C[H] = nil, nil
+                end
+            end,
+            
+            function(H)
+                for I = 1, #H, 1 do
+                    c[H[I]] = 1 + c[H[I]]
+                end
+                if q then
+                    local X = q(true)
+                    local y = z(X)
+                    y[I(1815)], y[I(1820)], y[I(1799)] = H, p, function()
+                        return -2356397
+                    end
+                    return X
+                else
+                    return f(
+                        {},
+                        {
+                            [I(1820)] = p,
+                            [I(1815)] = H,
+                            [I(1799)] = function()
+                                return -2356397
+                            end
+                        }
+                    )
+                end
+            end
+            
+        return (K(2001294, {}))(y(P))
+    end)(
+        getfenv and getfenv() or _ENV,
+        unpack or table[I(1812)],
+        newproxy,
+        setmetatable,
+        getmetatable,
+        select,
+        {...}
+    )
+end)(...)
