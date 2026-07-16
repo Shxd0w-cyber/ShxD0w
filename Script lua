@@ -81,3 +81,371 @@ return (function(...)
     -- Virtual Machine Interpreter execution environment
     return (function(H, y, q, f, z, E, P, U, w, a, A, T, X, c, n, x, C, p, F, K)
         K = function(H, I)
+            local y = x(I)
+            return function(...) return X(H, {...}, I, y) end
+        end
+
+        F = function(H, I)
+            local y = x(I)
+            return function(q) return X(H, {q}, I, y) end
+        end
+
+        a = 0
+
+        w = function(H, I)
+            local y = x(I)
+            return function(q, f, z, E) return X(H, {q, f, z, E}, I, y) end
+        end
+
+        z = function(X, q, f, z)
+            local u, b, i, v, P, h, m, d, Q, Y, G, l, j, J, B, x, O, R, k, c, p, D, e, Z, t, L, o, V, W, a, K, r, S, g
+            while X do
+                if X < 9678083 then
+                    if X < 4121800 then
+                        if X < 2201776 then
+                            if X < 1786050 then
+                                if X < 1412323 then
+                                    if X < 1060447 then
+                                        if X < 219605 then
+                                            d = #Q
+                                            J = 0
+                                            e = (d == J)
+                                            X = e and 14544368 or 1454992
+                                        else
+                                            X = C[f[10]]
+                                            a = C[f[11]]
+                                            c[X] = a
+                                            X = C[f[12]]
+                                            a = {X(c)}
+                                            X = H[I(1831)]
+                                            P = {y(a)}
+                                        end
+                                    else
+                                        X = 2723160
+                                    end
+                                else
+                                    if X < 1572802 then
+                                        J = #Q
+                                        d = 1
+                                        e = p(d, J)
+                                        d = v(Q, e)
+                                        J = C[i]
+                                        e = nil
+                                        X = 162871
+                                        Z = 1
+                                        D = d - Z
+                                        r = h(D)
+                                        J[d] = r
+                                        d = nil
+                                    else
+                                        b = 13
+                                        a = C[f[3]]
+                                        x = 32
+                                        c = a % x
+                                        S = 2
+                                        p = C[f[4]]
+                                        h = C[f[2]]
+                                        e = C[f[3]]
+                                        Q = e - c
+                                        e = 32
+                                        i = Q / e
+                                        k = b - i
+                                        u = S ^ k
+                                        v = h / u
+                                        u = 1
+                                        K = p(v)
+                                        p = 4294967296
+                                        x = K % p
+                                        K = 2
+                                        p = K ^ c
+                                        a = x / p
+                                        p = C[f[4]]
+                                        S = 256
+                                        h = a % u
+                                        b = 256
+                                        u = 4294967296
+                                        v = h * u
+                                        K = p(v)
+                                        p = C[f[4]]
+                                        X = 16003026
+                                        v = p(a)
+                                        x = K + v
+                                        K = 65536
+                                        p = x % K
+                                        v = x - p
+                                        x = nil
+                                        c = nil
+                                        h = 65536
+                                        K = v / h
+                                        h = 256
+                                        v = p % h
+                                        u = p - v
+                                        h = u / S
+                                        S = 256
+                                        u = K % S
+                                        k = K - u
+                                        K = nil
+                                        a = nil
+                                        p = nil
+                                        S = k / b
+                                        k = {v, h, u, S}
+                                        u = nil
+                                        v = nil
+                                        S = nil
+                                        C[f[1]] = k
+                                        h = nil
+                                    end
+                                end
+                            else
+                                if X < 1981472 then
+                                    if X < 1829578 then
+                                        v = C[K]
+                                        P = v
+                                        X = 2218587
+                                    else
+                                        P = S
+                                        X = k
+                                        X = S and 16720596 or 6773434
+                                    end
+                                else
+                                    if X < 2072575 then
+                                        h = I(1791)
+                                        c = q
+                                        X = true
+                                        x = I(1821)
+                                        a = T()
+                                        C[a] = X
+                                        P = H[x]
+                                        x = I(1809)
+                                        X = P[x]
+                                        p = T()
+                                        K = T()
+                                        u = U(15889768, {K})
+                                        x = T()
+                                        C[x] = X
+                                        X = w(9552139, {})
+                                        C[p] = X
+                                        X = false
+                                        C[K] = X
+                                        v = H[h]
+                                        h = v(u)
+                                        X = h and 1812644 or 2218587
+                                        P = h
+                                    else
+                                        d = d + r
+                                        Z = not D
+                                        e = d <= J
+                                        e = Z and e
+                                        Z = d >= J
+                                        Z = D and Z
+                                        e = Z or e
+                                        Z = 11321372
+                                        X = e and Z
+                                        e = 12602438
+                                        X = X or e
+                                    end
+                                end
+                            end
+                        else
+                            if X < 3309665 then
+                                if X < 2726218 then
+                                    if X < 2470635 then
+                                        if X < 2388558 then
+                                            h = I(1795)
+                                            v = P
+                                            P = H[h]
+                                            h = I(1818)
+                                            u = I(1822)
+                                            i = I(1822)
+                                            X = P[h]
+                                            h = T()
+                                            C[h] = X
+                                            P = H[u]
+                                            u = I(1826)
+                                            X = P[u]
+                                            k = X
+                                            b = H[i]
+                                            S = b
+                                            u = X
+                                            X = b and 4313383 or 1980430
+                                        else
+                                            x = 1
+                                            a = C[f[3]]
+                                            c = a ~= x
+                                            X = c and 1763876 or 12554486
+                                        end
+                                    else
+                                        X = true
+                                        X = X and 13115901 or 4825508
+                                    end
+                                else
+                                    if X < 3022943 then
+                                        X = {}
+                                        C[f[2]] = X
+                                        h = 255
+                                        k = 1
+                                        K = 35184372088832
+                                        P = C[f[3]]
+                                        u = I(1821)
+                                        p = P
+                                        P = a % K
+                                        C[f[4]] = P
+                                        v = a % h
+                                        h = 2
+                                        K = v + h
+                                        C[f[5]] = K
+                                        h = H[u]
+                                        u = I(1787)
+                                        v = h[u]
+                                        h = v(c)
+                                        X = 14293230
+                                        v = I(1796)
+                                        x[a] = v
+                                        v = 101
+                                        b = k
+                                        S = h
+                                        k = 0
+                                        u = 1
+                                        i = b < k
+                                        k = u - b
+                                    else
+                                        D = I(1795)
+                                        r = T()
+                                        C[r] = Y
+                                        Z = 100
+                                        o = 2
+                                        P = H[D]
+                                        j = 255
+                                        D = I(1818)
+                                        X = P[D]
+                                        D = 1
+                                        R = 1
+                                        G = 0
+                                        P = X(D, Z)
+                                        Z = 0
+                                        D = T()
+                                        C[D] = P
+                                        X = C[h]
+                                        P = X(Z, j)
+                                        Z = T()
+                                        C[Z] = P
+                                        X = C[h]
+                                        j = 1
+                                        g = C[D]
+                                        t = 10000
+                                        P = X(j, g)
+                                        j = T()
+                                        C[j] = P
+                                        P = C[h]
+                                        g = P(R, o)
+                                        P = 1
+                                        X = g == P
+                                        o = I(1825)
+                                        g = T()
+                                        L = I(1792)
+                                        C[g] = X
+                                        P = I(1829)
+                                        W = H[L]
+                                        V = C[h]
+                                        X = I(1789)
+                                        B = {V(G, t)}
+                                        L = W(y(B))
+                                        W = I(1825)
+                                        O = L .. W
+                                        X = e[X]
+                                        R = o .. O
+                                        X = X(e, P, R)
+                                        R = T()
+                                        O = U(16505853, {h, r, k, x, a, d, g, R, D, j, Z, S})
+                                        C[R] = X
+                                        o = I(1791)
+                                        P = H[o]
+                                        o = {P(O)}
+                                        X = {y(o)}
+                                        o = X
+                                        X = C[g]
+                                        X = X and 10059750 or 12528784
+                                    end
+                                end
+                            else
+                                if X < 3830615 then
+                                    X = 9509749
+                                    l = b == i
+                                    Y = l
+                                else
+                                    if X < 4087978 then
+                                        X = 15381769
+                                    else
+                                        r = A(r)
+                                        o = nil
+                                        j = A(j)
+                                        R = A(R)
+                                        g = A(g)
+                                        X = 6055795
+                                        Z = A(Z)
+                                        D = A(D)
+                                    end
+                                end
+                            end
+                        end
+                    else
+                        -- Continuation structure for remaining nested registers
+                        X = #z
+                        return y(P)
+                    end
+                end
+            end
+        end,
+        {},
+        function(H)
+            local I, X = 1, H[1]
+            while X do
+                c[X], I = c[X] - 1, 1 + I
+                if c[X] == 0 then c[X], C[X] = nil, nil end
+                X = H[I]
+            end
+        end,
+        function(H, I)
+            local y = x(I)
+            return function(q, f, z) return X(H, {q, f, z}, I, y) end
+        end,
+        {},
+        function()
+            a = a + 1
+            c[a] = 1
+            return a
+        end,
+        function(H, I)
+            local y = x(I)
+            return function(q, f, z, E, P) return X(H, {q, f, z, E, P}, I, y) end
+        end,
+        function(H)
+            c[H] = c[H] - 1
+            if c[H] == 0 then c[H], C[H] = nil, nil end
+        end,
+        function(H)
+            for I = 1, #H, 1 do c[H[I]] = 1 + c[H[I]] end
+            if q then
+                local X = q(true)
+                local y = z(X)
+                y[I(1815)], y[I(1820)], y[I(1799)] = H, p, function() return -2356397 end
+                return X
+            else
+                return f({}, {
+                    [I(1820)] = p,
+                    [I(1815)] = H,
+                    [I(1799)] = function() return -2356397 end
+                })
+            end
+        end
+        return (K(2001294, {}))(y(P))
+    end)(
+        getfenv and getfenv() or _ENV,
+        unpack or table[I(1812)],
+        newproxy,
+        setmetatable,
+        getmetatable,
+        select,
+        {...}
+    )
+end)(...)
